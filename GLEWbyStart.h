@@ -31,7 +31,8 @@ R2C_VIA_LONG(GLsizeiptr)
 R2C_VIA_LONG(GLintptrARB)
 R2C_VIA_LONG(GLsizeiptrARB)
 
-R2C_VIA_LONG(constGLint) /* wacky */
+/* wacky... */
+#define r2c_constGLint r2c_GLint
 
 #define R2C_VIA_DOUBLE(type) R2C_VIA(type, NUM2DBL)
 R2C_VIA_DOUBLE(GLfloat)
@@ -39,7 +40,8 @@ R2C_VIA_DOUBLE(GLdouble)
 R2C_VIA_DOUBLE(GLclampf)
 R2C_VIA_DOUBLE(GLclampd)
 
-R2C_VIA_LONG(constGLfloat) /* wacky */
+/* wacky... */
+#define r2c_constGLfloat r2c_GLfloat
 
 /***********************************************************/
 /* C to Ruby type conversion                               */
@@ -62,3 +64,13 @@ C2R_VIA_ULONG(GLhandleARB)
 #define C2R_VIA_LONG(type) C2R_VIA(type, LONG2NUM)
 C2R_VIA_LONG(GLint)
 C2R_VIA_LONG(GLintptr)
+
+/***********************************************************/
+/* Meta                                                    */
+/***********************************************************/
+
+#define RGL_ENUM(name, value) \
+    rb_define_const(mGLEW, name, c2r_GLenum(value))
+
+#define RGL_FUNCTION(name, fn, args) \
+    rb_define_module_function(mGLEW, name, fn, args);

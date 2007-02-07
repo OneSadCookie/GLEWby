@@ -88,7 +88,9 @@ puts <<EOH
 
 EOH
 
-functions.each do |name, fn|
+functions.keys.sort.each do |name|
+    fn = functions[name]
+    
     puts "static VALUE rgl_#{fn.name}(#{r_args(fn)}) {"
     fn.args.each do |arg|
         puts "    #{arg.type} #{arg.name} = #{r2c(arg.type)}(r_#{arg.name});"
@@ -107,6 +109,32 @@ functions.each do |name, fn|
     puts "}\n\n"
 end
 
+puts <<EOI
+static VALUE mGLEW = Qnil;
+
+void Init_glewby(void) {
+    mGLEW = rb_define_module("GLEW");
+    
+EOI
+
+constants.keys.sort.each do |constant|
+    puts <<EOC
+    RGL_ENUM("#{constant}", GL_#{constant});
+EOC
+end
+
+puts "\n\n"
+
+functions.keys.sort.each do |name|
+    fn = functions[name]
+    
+    puts <<EOF
+    RGL_FUNCTION("#{name}", rgl_#{name}, #{fn.args.size});
+EOF
+end
+
 puts <<EOF
+}
+
 #include "GLEWbyEnd.h"
 EOF
