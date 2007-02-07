@@ -43,6 +43,34 @@ R2C_VIA_DOUBLE(GLclampd)
 /* wacky... */
 #define r2c_constGLfloat r2c_GLfloat
 
+static inline void *r2c_voidStar(VALUE value) {
+    /* for VBOs/PBOs */
+    if (rb_obj_is_kind_of(value, rb_cNumeric)) {
+        return (void *)NUM2ULONG(value);
+    } else {
+        return StringValuePtr(value);
+    }
+}
+
+#define r2c_GLvoidStar r2c_voidStar
+#define r2c_constGLvoidStar r2c_voidStar
+#define r2c_constvoidStar r2c_voidStar
+
+#define R2C_VIA_STRING(name, type)                     \
+    static inline type r2c_##name(VALUE value) { \
+        return (type)StringValuePtr(value);            \
+    }
+
+R2C_VIA_STRING(constGLcharStar, const GLchar *);
+R2C_VIA_STRING(constGLcharARBStar, const GLcharARB *);
+R2C_VIA_STRING(constGLubyteStar, const GLubyte *);
+R2C_VIA_STRING(constGLbyteStar, const GLbyte *);
+
+R2C_VIA_STRING(GLcharStar, GLchar *);
+R2C_VIA_STRING(GLcharARBStar, GLcharARB *);
+R2C_VIA_STRING(GLubyteStar, GLubyte *);
+R2C_VIA_STRING(GLbyteStar, GLbyte *);
+
 /***********************************************************/
 /* C to Ruby type conversion                               */
 /***********************************************************/
@@ -66,7 +94,7 @@ C2R_VIA_LONG(GLint)
 C2R_VIA_LONG(GLintptr)
 
 /***********************************************************/
-/* Meta                                                    */
+/* Ruby Registration                                       */
 /***********************************************************/
 
 #define RGL_ENUM(name, value) \
