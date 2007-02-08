@@ -36,6 +36,10 @@ class Type
         @const
     end
     
+    def == (other)
+        @const == other.const?
+    end
+    
 end
 
 class SimpleType < Type
@@ -63,6 +67,10 @@ class SimpleType < Type
         false
     end
     
+    def == (other)
+        @name == other.name && super(other)
+    end
+    
 end
 
 class PointerType < Type
@@ -88,6 +96,10 @@ class PointerType < Type
     
     def pointer?
         true
+    end
+    
+    def == (other)
+        @type == other.type && super(other)
     end
     
 end
@@ -221,7 +233,11 @@ functions.keys.sort.each do |name|
     end
     
     funcall = 'gl' + fn.name + '(' + fn.args.collect do |arg|
-        arg.name
+        if arg.type.freeable_copy != arg.type then
+            "(#{arg.type})#{arg.name}"
+        else
+            arg.name
+        end
     end.join(', ') + ')'
     
     if fn.return_type.void? then
