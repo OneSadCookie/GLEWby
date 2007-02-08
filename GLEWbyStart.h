@@ -105,8 +105,11 @@ R2C_ARRAY(GLclampf)
 R2C_ARRAY_RAW(void *, voidStar)
 #define r2c_GLvoidStarStar r2c_voidStarStar
 
-R2C_ARRAY_RAW(const GLchar *, GLcharConstStar)
-R2C_ARRAY_RAW(const GLcharARB *, GLcharARBConstStar)
+R2C_ARRAY_RAW(GLchar *, GLcharStar)
+R2C_ARRAY_RAW(GLcharARB *, GLcharARBStar)
+
+#define r2c_GLcharConstStarStar r2c_GLcharStarStar
+#define r2c_GLcharARBConstStarStar r2c_GLcharARBStarStar
 
 #define r2c_GLbooleanConstStar r2c_GLbooleanStar
 #define r2c_GLushortConstStar r2c_GLushortStar
@@ -124,6 +127,11 @@ R2C_ARRAY_RAW(const GLcharARB *, GLcharARBConstStar)
 
 #define r2c_voidConstStarStar r2c_voidStarStar
 #define r2c_GLvoidConstStarStar r2c_voidStarStar
+#define r2c_GLvoidConstStarConstStar r2c_voidStarStar
+
+R2C_ARRAY_RAW(GLboolean *, GLbooleanStar)
+
+#define r2c_GLbooleanConstStarStar r2c_GLbooleanStarStar
 
 /***********************************************************/
 /* C to Ruby type conversion                               */

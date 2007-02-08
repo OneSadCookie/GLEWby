@@ -1,3 +1,6 @@
+glewby.bundle: GLEWby.o
+	gcc -bundle GLEWby.o glew/lib/libGLEW.a -o glewby.bundle -framework OpenGL
+
 GLEWby.o: GLEWby.c GLEWbyStart.h GLEWbyEnd.h
 	gcc -I../Thirdparty/Root/i386/include/ruby -Iglew/include -c GLEWby.c -Wall -W -Wno-unused-parameter -Werror
 
