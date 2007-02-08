@@ -176,9 +176,9 @@ def parse_header(constants, functions, rejects)
 end
 
 def r_args(fn)
-    fn.args.collect do |arg|
+    (['VALUE r_GLEW'] + fn.args.collect do |arg|
         'VALUE r_' + arg.name
-    end.join(', ')
+    end).join(', ')
 end
 
 def sanitize_type(type)
@@ -261,10 +261,8 @@ functions.keys.sort.each do |name|
 end
 
 puts <<EOI
-static VALUE mGLEW = Qnil;
-
 void Init_glewby(void) {
-    mGLEW = rb_define_module("GLEW");
+    init_others();
     
 EOI
 

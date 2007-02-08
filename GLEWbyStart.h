@@ -215,3 +215,19 @@ C2R_WRITEBACK_ARRAY(GLdouble)
 
 #define RGL_FUNCTION(name, fn, args) \
     rb_define_module_function(mGLEW, name, fn, args)
+
+/***********************************************************/
+/* Other GLEW Functions                                    */
+/***********************************************************/
+
+static VALUE rglew_Init(VALUE self) {
+    return c2r_GLenum(glewInit());
+}
+
+static VALUE mGLEW = Qnil;
+
+static void init_others(void) {
+    mGLEW = rb_define_module("GLEW");
+    
+    RGL_FUNCTION("glewInit", rglew_Init, 0);
+}
