@@ -18,6 +18,111 @@ class DevNull
     
 end
 
+class Type
+    
+    def initialize(const)
+        @const = const
+    end
+    
+    def to_s
+        if @const then
+            ' const'
+        else
+            ''
+        end
+    end
+    
+    def const?
+        @const
+    end
+    
+end
+
+class SimpleType < Type
+    
+    attr_reader :name
+    
+    def initialize(name, const)
+        super(const)
+        @name = name
+    end
+    
+    def to_s
+        @name + super
+    end
+    
+    def freeable_copy
+        self.class.new(@name, false)
+    end
+    
+    def void?
+        @name == 'void' || @name == 'GLvoid'
+    end
+    
+    def pointer?
+        false
+    end
+    
+end
+
+class PointerType < Type
+    
+    attr_reader :type
+    
+    def initialize(type, const)
+        super(const)
+        @type = type
+    end
+    
+    def to_s
+        @type.to_s + ' *' + super
+    end
+    
+    def freeable_copy
+        self.class.new(@type.freeable_copy, const?)
+    end
+    
+    def void?
+        false
+    end
+    
+    def pointer?
+        true
+    end
+    
+end
+
+def parse_type(type)
+    bits = type.split(/\b/).collect do |token|
+        s = token.strip
+        if s.size == 0 then
+            nil
+        else
+            s
+        end
+    end.compact
+    
+    # TODO there's gotta be a better way to do this!
+    if bits.size == 1 then
+        SimpleType.new(bits[0], false)
+    elsif bits.size == 2 && bits[0] == 'const' then
+        SimpleType.new(bits[1], true)
+    elsif bits.size == 2 && bits[1] == '*' then
+        PointerType.new(SimpleType.new(bits[0], false), false)
+    elsif bits.size == 2 && bits[1] =~ /\*\s*\*/ then
+        PointerType.new(PointerType.new(SimpleType.new(bits[0], false), false), false)
+    elsif bits.size == 3 && bits[0] == 'const' && bits[2] == '*' then
+        PointerType.new(SimpleType.new(bits[1], true), false)
+    elsif bits.size == 3 && bits[0] == 'const' && bits[2] =~ /\*\s*\*/ then
+        PointerType.new(PointerType.new(SimpleType.new(bits[1], true), false), false)
+    elsif bits.size == 5 && bits[0] == 'const' && bits[2] == '*' && bits[3] == 'const' && bits[4] == '*' then
+        PointerType.new(PointerType.new(SimpleType.new(bits[1], true), true), false)
+    else
+        p bits
+        exit
+    end
+end
+
 def parse_args(args)
     if args =~ /^\s*void\s*$/ then
         return []
@@ -27,7 +132,10 @@ def parse_args(args)
     args = args.split(/,/)
     args.collect do |arg|
         raise "Can't parse argument " + arg unless arg =~ Regexp.compile(ARG_CAPTURE)
-        Argument.new($2 || 'arg' + (extra_arg_index += 1).to_s, ($1 + $3).gsub(/\[\d*\]/, '*'))
+        name = $2 || 'arg' + (extra_arg_index += 1).to_s
+        raw_type = ($1 + $3).gsub(/\[\d*\]/, '*').strip
+        type = parse_type(raw_type)
+        Argument.new(name, type)
     end
 end
 
@@ -38,9 +146,9 @@ def parse_header(constants, functions, rejects)
             if line =~ /^#define\s+GL_([A-Z_0-9]+)\s+.*$/ then
                 constants[$1] = true
             elsif line =~ Regexp.compile(FUNCTION) then
-                functions[$2] = Function.new($2, $1, parse_args($3))
+                functions[$2] = Function.new($2, parse_type($1), parse_args($3))
             elsif line =~ Regexp.compile(FUNCTYPE) then
-                functypes[$2] = Function.new($2, $1, parse_args($3))
+                functypes[$2] = Function.new($2, parse_type($1), parse_args($3))
             elsif line =~ /^#define\s+gl([A-Z][A-Za-z0-9]+)\s+GLEW_GET_FUN.*$/ then
                 fn = functypes[$1.upcase]
                 if fn == nil then
@@ -62,7 +170,7 @@ def r_args(fn)
 end
 
 def sanitize_type(type)
-    type.
+    type.to_s.
         gsub(/\s/, '').
         gsub(/\*/, 'Star').
         gsub(/\W/, '_')
@@ -80,17 +188,15 @@ def c2r_writeback(type)
     'c2r_writeback_' + sanitize_type(type)
 end
 
-def local_type(type)
-    type.gsub(/\s*const\s*/, '')
+def needs_writeback(type)
+    !type.type.const? &&
+        !type.type.pointer? &&
+        type.type.name !~ /void|byte|char/
 end
-
-def is_pointer(type)
-    (type =~ /\*/  && type !~ /void|char|byte/) ||
-        (type =~ /\*.*\*/)
-end
-
-def pointer_needs_writeback(type)
-    type !~ /const/
+    
+def needs_free(type)
+    !type.type.pointer? &&
+        type.type.name !~ /void|byte|char/
 end
 
 constants = {}
@@ -110,25 +216,27 @@ functions.keys.sort.each do |name|
     
     puts "static VALUE rgl_#{fn.name}(#{r_args(fn)}) {"
     fn.args.each do |arg|
-        puts "    #{local_type(arg.type)} #{arg.name} = #{r2c(arg.type)}(r_#{arg.name});"
+        puts "    #{arg.type.freeable_copy} #{arg.name} = #{r2c(arg.type)}(r_#{arg.name});"
     end
     
     funcall = 'gl' + fn.name + '(' + fn.args.collect do |arg|
         arg.name
     end.join(', ') + ')'
     
-    if fn.return_type == 'void' then
+    if fn.return_type.void? then
         puts "    #{funcall};\n    VALUE result = Qnil;"
     else
         puts "    VALUE result = #{c2r(fn.return_type)}(#{funcall});"
     end
     
     fn.args.each do |arg|
-        if is_pointer(arg.type) then
-            if pointer_needs_writeback(arg.type) then
+        if arg.type.pointer? then
+            if needs_writeback(arg.type) then
                 puts "    #{c2r_writeback(arg.type)}(#{arg.name}, r_#{arg.name});"
             end
-            puts "    free(#{arg.name});"
+            if needs_free(arg.type) then
+                puts "    free(#{arg.name});"
+            end
         end
     end
     
