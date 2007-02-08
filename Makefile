@@ -3,3 +3,6 @@ GLEWby.o: GLEWby.c GLEWbyStart.h GLEWbyEnd.h
 
 GLEWby.c: glewby.rb
 	ruby glewby.rb
+
+preprocess: GLEWby.c GLEWbyStart.h GLEWbyEnd.h
+	gcc -E -I../Thirdparty/Root/i386/include/ruby -Iglew/include GLEWby.c

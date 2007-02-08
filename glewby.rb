@@ -76,6 +76,22 @@ def c2r(type)
     'c2r_' + sanitize_type(type)
 end
 
+def c2r_writeback(type)
+    'c2r_writeback_' + sanitize_type(type)
+end
+
+def local_type(type)
+    type.gsub(/const/, '')
+end
+
+def is_pointer(type)
+    type =~ /\*/  && type !~ /void|char|byte/
+end
+
+def pointer_needs_writeback(type)
+    type !~ /const/
+end
+
 constants = {}
 functions = {}
 parse_header(constants, functions, DevNull.new)
@@ -93,7 +109,7 @@ functions.keys.sort.each do |name|
     
     puts "static VALUE rgl_#{fn.name}(#{r_args(fn)}) {"
     fn.args.each do |arg|
-        puts "    #{arg.type} #{arg.name} = #{r2c(arg.type)}(r_#{arg.name});"
+        puts "    #{local_type(arg.type)} #{arg.name} = #{r2c(arg.type)}(r_#{arg.name});"
     end
     
     funcall = 'gl' + fn.name + '(' + fn.args.collect do |arg|
@@ -101,12 +117,21 @@ functions.keys.sort.each do |name|
     end.join(', ') + ')'
     
     if fn.return_type == 'void' then
-        puts "    #{funcall};\n    return Qnil;"
+        puts "    #{funcall};\n    VALUE result = Qnil;"
     else
-        puts "    return #{c2r(fn.return_type)}(#{funcall});"
+        puts "    VALUE result = #{c2r(fn.return_type)}(#{funcall});"
     end
     
-    puts "}\n\n"
+    fn.args.each do |arg|
+        if is_pointer(arg.type) then
+            if pointer_needs_writeback(arg.type) then
+                puts "    #{c2r_writeback(arg.type)}(#{arg.name}, r_#{arg.name});"
+            end
+            puts "    free(#{arg.name});"
+        end
+    end
+    
+    puts "    return result;\n}\n\n"
 end
 
 puts <<EOI
