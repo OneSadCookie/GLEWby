@@ -47,7 +47,9 @@ R2C_VIA_DOUBLE(GLclampd)
 
 static inline void *r2c_voidStar(VALUE value) {
     /* for VBOs/PBOs */
-    if (rb_obj_is_kind_of(value, rb_cNumeric)) {
+    if (NIL_P(value)) {
+        return NULL;
+    } else if (rb_obj_is_kind_of(value, rb_cNumeric)) {
         return (void *)NUM2ULONG(value);
     } else {
         return StringValuePtr(value);
