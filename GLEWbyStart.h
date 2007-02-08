@@ -58,9 +58,9 @@ static inline void *r2c_voidStar(VALUE value) {
 #define r2c_constGLvoidStar r2c_voidStar
 #define r2c_constvoidStar r2c_voidStar
 
-#define R2C_VIA_STRING(name, type)                     \
-    static inline type r2c_##name(VALUE value) {       \
-        return (type)StringValuePtr(value);            \
+#define R2C_VIA_STRING(name, type)               \
+    static inline type r2c_##name(VALUE value) { \
+        return (type)StringValuePtr(value);      \
     }
 
 R2C_VIA_STRING(GLcharStar, GLchar *)
@@ -73,16 +73,17 @@ R2C_VIA_STRING(GLbyteStar, GLbyte *)
 #define r2c_constGLubyteStar r2c_GLubyteStar
 #define r2c_constGLbyteStar r2c_GLbyteStar
 
-#define R2C_ARRAY(type)                                   \
-    static type *r2c_##type##Star(VALUE value) {          \
+#define R2C_ARRAY_RAW(type, name)                         \
+    static type *r2c_##name##Star(VALUE value) {          \
         long n = RARRAY(value)->len;                      \
         type *array = malloc(n * sizeof(type));           \
         long i;                                           \
         for (i = 0; i < n; ++i) {                         \
-            array[i] = r2c_##type(RARRAY(value)->ptr[i]); \
+            array[i] = r2c_##name(RARRAY(value)->ptr[i]); \
         }                                                 \
         return array;                                     \
     }
+#define R2C_ARRAY(type) R2C_ARRAY_RAW(type, type)
 
 R2C_ARRAY(GLboolean)
 R2C_ARRAY(GLushort)
@@ -101,6 +102,12 @@ R2C_ARRAY(GLfloat)
 R2C_ARRAY(GLdouble)
 R2C_ARRAY(GLclampf)
 
+R2C_ARRAY_RAW(void *, voidStar)
+#define r2c_GLvoidStarStar r2c_voidStarStar
+
+R2C_ARRAY_RAW(const GLchar *, constGLcharStar)
+R2C_ARRAY_RAW(const GLcharARB *, constGLcharARBStar)
+
 #define r2c_constGLbooleanStar r2c_GLbooleanStar
 #define r2c_constGLushortStar r2c_GLushortStar
 #define r2c_constGLuintStar r2c_GLuintStar
@@ -114,6 +121,9 @@ R2C_ARRAY(GLclampf)
 #define r2c_constGLfloatStar r2c_GLfloatStar
 #define r2c_constGLdoubleStar r2c_GLdoubleStar
 #define r2c_constGLclampfStar r2c_GLclampfStar
+
+#define r2c_constvoidStarStar r2c_voidStarStar
+#define r2c_constGLvoidStarStar r2c_voidStarStar
 
 /***********************************************************/
 /* C to Ruby type conversion                               */

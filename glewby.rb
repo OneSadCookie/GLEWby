@@ -81,11 +81,12 @@ def c2r_writeback(type)
 end
 
 def local_type(type)
-    type.gsub(/const/, '')
+    type.gsub(/\s*const\s*/, '')
 end
 
 def is_pointer(type)
-    type =~ /\*/  && type !~ /void|char|byte/
+    (type =~ /\*/  && type !~ /void|char|byte/) ||
+        (type =~ /\*.*\*/)
 end
 
 def pointer_needs_writeback(type)
@@ -144,7 +145,7 @@ EOI
 
 constants.keys.sort.each do |constant|
     puts <<EOC
-    RGL_ENUM("#{constant}", GL_#{constant});
+    RGL_ENUM("GL_#{constant}", GL_#{constant});
 EOC
 end
 
@@ -154,7 +155,7 @@ functions.keys.sort.each do |name|
     fn = functions[name]
     
     puts <<EOF
-    RGL_FUNCTION("#{name}", rgl_#{name}, #{fn.args.size});
+    RGL_FUNCTION("gl#{name}", rgl_#{name}, #{fn.args.size});
 EOF
 end
 
