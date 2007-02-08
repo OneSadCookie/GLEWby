@@ -173,6 +173,7 @@ def sanitize_type(type)
     type.to_s.
         gsub(/\s/, '').
         gsub(/\*/, 'Star').
+        gsub(/const/, 'Const').
         gsub(/\W/, '_')
 end
 

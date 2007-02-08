@@ -35,7 +35,7 @@ R2C_VIA_LONG(GLsizeiptr)
 R2C_VIA_LONG(GLintptrARB)
 R2C_VIA_LONG(GLsizeiptrARB)
 
-#define r2c_GLintconst r2c_GLint
+#define r2c_GLintConst r2c_GLint
 
 #define R2C_VIA_DOUBLE(type) R2C_VIA(type, NUM2DBL)
 R2C_VIA_DOUBLE(GLfloat)
@@ -43,7 +43,7 @@ R2C_VIA_DOUBLE(GLdouble)
 R2C_VIA_DOUBLE(GLclampf)
 R2C_VIA_DOUBLE(GLclampd)
 
-#define r2c_GLfloatconst r2c_GLfloat
+#define r2c_GLfloatConst r2c_GLfloat
 
 static inline void *r2c_voidStar(VALUE value) {
     /* for VBOs/PBOs */
@@ -55,8 +55,8 @@ static inline void *r2c_voidStar(VALUE value) {
 }
 
 #define r2c_GLvoidStar r2c_voidStar
-#define r2c_GLvoidconstStar r2c_voidStar
-#define r2c_voidconstStar r2c_voidStar
+#define r2c_GLvoidConstStar r2c_voidStar
+#define r2c_voidConstStar r2c_voidStar
 
 #define R2C_VIA_STRING(name, type)               \
     static inline type r2c_##name(VALUE value) { \
@@ -68,10 +68,10 @@ R2C_VIA_STRING(GLcharARBStar, GLcharARB *)
 R2C_VIA_STRING(GLubyteStar, GLubyte *)
 R2C_VIA_STRING(GLbyteStar, GLbyte *)
 
-#define r2c_GLcharconstStar r2c_GLcharStar
-#define r2c_GLcharARBconstStar r2c_GLcharARBStar
-#define r2c_GLubyteconstStar r2c_GLubyteStar
-#define r2c_GLbyteconstStar r2c_GLbyteStar
+#define r2c_GLcharConstStar r2c_GLcharStar
+#define r2c_GLcharARBConstStar r2c_GLcharARBStar
+#define r2c_GLubyteConstStar r2c_GLubyteStar
+#define r2c_GLbyteConstStar r2c_GLbyteStar
 
 #define R2C_ARRAY_RAW(type, name)                         \
     static type *r2c_##name##Star(VALUE value) {          \
@@ -105,25 +105,25 @@ R2C_ARRAY(GLclampf)
 R2C_ARRAY_RAW(void *, voidStar)
 #define r2c_GLvoidStarStar r2c_voidStarStar
 
-R2C_ARRAY_RAW(const GLchar *, GLcharconstStar)
-R2C_ARRAY_RAW(const GLcharARB *, GLcharARBconstStar)
+R2C_ARRAY_RAW(const GLchar *, GLcharConstStar)
+R2C_ARRAY_RAW(const GLcharARB *, GLcharARBConstStar)
 
-#define r2c_GLbooleanconstStar r2c_GLbooleanStar
-#define r2c_GLushortconstStar r2c_GLushortStar
-#define r2c_GLuintconstStar r2c_GLuintStar
-#define r2c_GLsizeiconstStar r2c_GLsizeiStar
-#define r2c_GLenumconstStar r2c_GLenumStar
-#define r2c_GLhalfconstStar r2c_GLhalfStar
+#define r2c_GLbooleanConstStar r2c_GLbooleanStar
+#define r2c_GLushortConstStar r2c_GLushortStar
+#define r2c_GLuintConstStar r2c_GLuintStar
+#define r2c_GLsizeiConstStar r2c_GLsizeiStar
+#define r2c_GLenumConstStar r2c_GLenumStar
+#define r2c_GLhalfConstStar r2c_GLhalfStar
 
-#define r2c_GLshortconstStar r2c_GLshortStar
-#define r2c_GLintconstStar r2c_GLintStar
+#define r2c_GLshortConstStar r2c_GLshortStar
+#define r2c_GLintConstStar r2c_GLintStar
 
-#define r2c_GLfloatconstStar r2c_GLfloatStar
-#define r2c_GLdoubleconstStar r2c_GLdoubleStar
-#define r2c_GLclampfconstStar r2c_GLclampfStar
+#define r2c_GLfloatConstStar r2c_GLfloatStar
+#define r2c_GLdoubleConstStar r2c_GLdoubleStar
+#define r2c_GLclampfConstStar r2c_GLclampfStar
 
-#define r2c_voidconstStarStar r2c_voidStarStar
-#define r2c_GLvoidconstStarStar r2c_voidStarStar
+#define r2c_voidConstStarStar r2c_voidStarStar
+#define r2c_GLvoidConstStarStar r2c_voidStarStar
 
 /***********************************************************/
 /* C to Ruby type conversion                               */
@@ -158,7 +158,7 @@ C2R_VIA_LONG(GLintptr)
 C2R_VIA_DOUBLE(GLfloat)
 C2R_VIA_DOUBLE(GLdouble)
 
-static VALUE c2r_GLubyteconstStar(const GLubyte *value) {
+static VALUE c2r_GLubyteConstStar(const GLubyte *value) {
     return rb_str_new2((const char *)value);
 }
 
