@@ -261,7 +261,7 @@ functions.keys.sort.each do |name|
 end
 
 puts <<EOI
-void Init_glewby(void) {
+DLLEXPORT void Init_glewby(void) {
     init_others();
     
 EOI

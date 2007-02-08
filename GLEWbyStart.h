@@ -1,6 +1,12 @@
 #include <ruby.h>
 #include <GL/glew.h>
 
+#if defined(_WIN32)
+    #define DLLEXPORT __declspec(dllexport)
+#else
+    #define DLLEXPORT
+#endif
+
 /***********************************************************/
 /* Ruby To C type conversion                               */
 /***********************************************************/

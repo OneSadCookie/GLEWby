@@ -1,0 +1,14 @@
+glewby.bundle: GLEWby.o
+	gcc -shared GLEWby.o glew/lib/glew32s.lib -o glewby.dll -L../Thirdparty/Root/i386/lib/ -lmsvcrt-ruby18 -lopengl32
+
+GLEWby.o: GLEWby.c GLEWbyStart.h GLEWbyEnd.h
+	gcc -DGLEW_STATIC -I../Thirdparty/Root/i386/include/ruby -Iglew/include -O2 -c GLEWby.c -Wall -W -Wno-unused-parameter -Werror
+
+GLEWby.c: glewby.rb
+	ruby glewby.rb
+
+preprocess: GLEWby.c GLEWbyStart.h GLEWbyEnd.h
+	gcc -E -I../Thirdparty/Root/i386/include/ruby -Iglew/include GLEWby.c
+
+clean:
+	rm -f GLEWby.o glewby.bundle
