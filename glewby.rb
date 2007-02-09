@@ -151,7 +151,7 @@ def parse_args(args)
     end
 end
 
-def parse_header(constants, functions, rejects)
+def parse_header(extensions, constants, functions, rejects)
     functypes = {}
     File.open('glew/include/GL/glew.h') do |header|
         header.each_line do |line|
@@ -168,6 +168,8 @@ def parse_header(constants, functions, rejects)
                 else
                     functions[$1] = Function.new($1, fn.return_type, fn.args)
                 end
+            elsif line =~ /^#define\s+GLEW_([A-Z][A-Za-z0-9_]+)\s*GLEW_GET_VAR.*$/ then
+                extensions[$1] = true
             else
                 rejects.puts(line)
             end
@@ -212,9 +214,10 @@ def needs_free(type)
         type.type.name !~ /void|byte|char/
 end
 
+extensions = {}
 constants = {}
 functions = {}
-parse_header(constants, functions, DevNull.new)
+parse_header(extensions, constants, functions, DevNull.new)
 
 $stdout = File.open('GLEWby.c', 'wb')
 
@@ -223,6 +226,15 @@ puts <<EOH
 
 
 EOH
+
+extensions.keys.sort.each do |name|
+    puts <<EOE
+static VALUE rglext_#{name}(VALUE r_GLEW) {
+    return c2r_GLboolean(GLEW_#{name});
+}
+
+EOE
+end
 
 functions.keys.sort.each do |name|
     fn = functions[name]
@@ -266,9 +278,17 @@ DLLEXPORT void Init_glewby(void) {
     
 EOI
 
+extensions.keys.sort.each do |extension|
+    puts <<EOE
+    RGL_EXT(#{extension});
+EOE
+end
+
+puts "\n\n"
+
 constants.keys.sort.each do |constant|
     puts <<EOC
-    RGL_ENUM("GL_#{constant}", GL_#{constant});
+    RGL_ENUM(#{constant});
 EOC
 end
 
@@ -278,7 +298,7 @@ functions.keys.sort.each do |name|
     fn = functions[name]
     
     puts <<EOF
-    RGL_FUNCTION("gl#{name}", rgl_#{name}, #{fn.args.size});
+    RGL_FUNCTION(#{name}, #{fn.args.size});
 EOF
 end
 

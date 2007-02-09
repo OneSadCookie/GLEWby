@@ -218,11 +218,17 @@ C2R_WRITEBACK_ARRAY(GLdouble)
 /* Ruby Registration                                       */
 /***********************************************************/
 
-#define RGL_ENUM(name, value) \
-    rb_define_const(mGLEW, name, c2r_GLenum(value))
+#define RGL_EXT(name)                         \
+    rb_define_module_function(                \
+        mGLEW, "GLEW_"#name, rglext_##name, 0)
 
-#define RGL_FUNCTION(name, fn, args) \
-    rb_define_module_function(mGLEW, name, fn, args)
+#define RGL_ENUM(name)                           \
+    rb_define_const(                             \
+        mGLEW, "GL_"#name, c2r_GLenum(GL_##name))
+
+#define RGL_FUNCTION(name, args)           \
+    rb_define_module_function(             \
+        mGLEW, "gl"#name, rgl_##name, args)
 
 /***********************************************************/
 /* Other GLEW Functions                                    */
@@ -237,5 +243,6 @@ static VALUE mGLEW = Qnil;
 static void init_others(void) {
     mGLEW = rb_define_module("GLEW");
     
-    RGL_FUNCTION("glewInit", rglew_Init, 0);
+    rb_define_module_function(
+        mGLEW, "glewInit", rglew_Init, 0);
 }
