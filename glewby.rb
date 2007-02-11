@@ -213,6 +213,74 @@ def needs_free(type)
     !type.type.pointer? &&
         type.type.name !~ /void|byte|char/
 end
+    
+def print_extension_function(io, name)
+    io.puts <<EOE
+static VALUE rglext_#{name}(VALUE r_GLEW) {
+    return c2r_GLboolean(GLEW_#{name});
+}
+
+EOE
+end
+
+def print_function(io, fn)
+    io.puts "static VALUE rgl_#{fn.name}(#{r_args(fn)}) {"
+    fn.args.each do |arg|
+        io.puts "    #{arg.type.freeable_copy} #{arg.name} = #{r2c(arg.type)}(r_#{arg.name});"
+    end
+    
+    funcall = 'gl' + fn.name + '(' + fn.args.collect do |arg|
+        if arg.type.freeable_copy != arg.type then
+            "(#{arg.type})#{arg.name}"
+        else
+            arg.name
+        end
+    end.join(', ') + ')'
+    
+    if fn.return_type.void? then
+        io.puts "    #{funcall};\n    VALUE result = Qnil;"
+    else
+        io.puts "    VALUE result = #{c2r(fn.return_type)}(#{funcall});"
+    end
+    
+    fn.args.each do |arg|
+        if arg.type.pointer? then
+            if needs_writeback(arg.type) then
+                io.puts "    #{c2r_writeback(arg.type)}(#{arg.name}, r_#{arg.name});"
+            end
+            if needs_free(arg.type) then
+                io.puts "    free(#{arg.name});"
+            end
+        end
+    end
+    
+    io.puts "    return result;\n}\n\n"
+end
+
+def print_extension_bindings(io, list)
+    list.each do |extension|
+        io.puts <<EOE
+    RGL_EXT(#{extension});
+EOE
+    end
+end
+
+def print_constant_bindings(io, list)
+    list.each do |constant|
+        io.puts <<EOC
+    RGL_ENUM(#{constant});
+EOC
+    end
+end
+
+def print_function_bindings(io, hash)
+    hash.keys.sort.each do |name|
+        fn = hash[name]
+        io.puts <<EOF
+    RGL_FUNCTION(#{fn.name}, #{fn.args.size});
+EOF
+    end
+end
 
 extensions = {}
 constants = {}
@@ -228,48 +296,12 @@ puts <<EOH
 EOH
 
 extensions.keys.sort.each do |name|
-    puts <<EOE
-static VALUE rglext_#{name}(VALUE r_GLEW) {
-    return c2r_GLboolean(GLEW_#{name});
-}
-
-EOE
+    print_extension_function($stdout, name)
 end
 
 functions.keys.sort.each do |name|
     fn = functions[name]
-    
-    puts "static VALUE rgl_#{fn.name}(#{r_args(fn)}) {"
-    fn.args.each do |arg|
-        puts "    #{arg.type.freeable_copy} #{arg.name} = #{r2c(arg.type)}(r_#{arg.name});"
-    end
-    
-    funcall = 'gl' + fn.name + '(' + fn.args.collect do |arg|
-        if arg.type.freeable_copy != arg.type then
-            "(#{arg.type})#{arg.name}"
-        else
-            arg.name
-        end
-    end.join(', ') + ')'
-    
-    if fn.return_type.void? then
-        puts "    #{funcall};\n    VALUE result = Qnil;"
-    else
-        puts "    VALUE result = #{c2r(fn.return_type)}(#{funcall});"
-    end
-    
-    fn.args.each do |arg|
-        if arg.type.pointer? then
-            if needs_writeback(arg.type) then
-                puts "    #{c2r_writeback(arg.type)}(#{arg.name}, r_#{arg.name});"
-            end
-            if needs_free(arg.type) then
-                puts "    free(#{arg.name});"
-            end
-        end
-    end
-    
-    puts "    return result;\n}\n\n"
+    print_function($stdout, fn)
 end
 
 puts <<EOI
@@ -278,29 +310,11 @@ DLLEXPORT void Init_glewby(void) {
     
 EOI
 
-extensions.keys.sort.each do |extension|
-    puts <<EOE
-    RGL_EXT(#{extension});
-EOE
-end
-
+print_extension_bindings($stdout, extensions.keys.sort)
 puts "\n\n"
-
-constants.keys.sort.each do |constant|
-    puts <<EOC
-    RGL_ENUM(#{constant});
-EOC
-end
-
+print_constant_bindings($stdout, constants.keys.sort)
 puts "\n\n"
-
-functions.keys.sort.each do |name|
-    fn = functions[name]
-    
-    puts <<EOF
-    RGL_FUNCTION(#{name}, #{fn.args.size});
-EOF
-end
+print_function_bindings($stdout, functions)
 
 puts <<EOF
 }
