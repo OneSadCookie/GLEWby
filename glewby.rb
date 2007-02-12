@@ -320,18 +320,24 @@ def write_functions_file(io, functions)
 end
 
 def main(args)
-    extensions, constants, functions =
-        parse_header(args[0], DevNull.new)
+    glew_header = args[0]
+    output_prefix = args[1]
     
-    File.open('glewby-extensions.c', 'wb') do |file|
+    extensions, constants, functions =
+        parse_header(glew_header, DevNull.new)
+    
+    File.open(output_prefix +
+            '/glewby-extensions.c', 'wb') do |file|
         write_extensions_file(file, extensions)
     end
     
-    File.open('glewby-constants.c', 'wb') do |file|
+    File.open(output_prefix +
+            '/glewby-constants.c', 'wb') do |file|
         write_constants_file(file, constants)
     end
     
-    File.open('glewby-functions.c', 'wb') do |file|
+    File.open(output_prefix +
+            '/glewby-functions.c', 'wb') do |file|
         write_functions_file(file, functions)
     end
 end
