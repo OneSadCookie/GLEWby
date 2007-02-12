@@ -151,9 +151,12 @@ def parse_args(args)
     end
 end
 
-def parse_header(extensions, constants, functions, rejects)
+def parse_header(path, rejects)
+    extensions = {}
+    constants = {}
+    functions = {}
     functypes = {}
-    File.open('glew/include/GL/glew.h') do |header|
+    File.open(path) do |header|
         header.each_line do |line|
             if line =~ /^#define\s+GL_([A-Z_0-9]+)\s+.*$/ then
                 constants[$1] = true
@@ -175,6 +178,7 @@ def parse_header(extensions, constants, functions, rejects)
             end
         end
     end
+    return extensions, constants, functions
 end
 
 def r_args(fn)
@@ -282,42 +286,54 @@ EOF
     end
 end
 
-extensions = {}
-constants = {}
-functions = {}
-parse_header(extensions, constants, functions, DevNull.new)
-
-$stdout = File.open('GLEWby.c', 'wb')
-
-puts <<EOH
-#include "GLEWbyStart.h"
-
-
-EOH
-
-extensions.keys.sort.each do |name|
-    print_extension_function($stdout, name)
-end
-
-functions.keys.sort.each do |name|
-    fn = functions[name]
-    print_function($stdout, fn)
-end
-
-puts <<EOI
-DLLEXPORT void Init_glewby(void) {
-    init_others();
+def write_extensions_file(io, extensions)
+    io.puts("#include \"glewby-extensions.h\"\n\n")
     
-EOI
+    extensions.keys.sort.each do |name|
+        print_extension_function(io, name)
+    end
+    
+    io.puts "void init_gl_extensions(void) {"
+    print_extension_bindings(io, extensions.keys.sort)
+    io.puts "}"
+end
 
-print_extension_bindings($stdout, extensions.keys.sort)
-puts "\n\n"
-print_constant_bindings($stdout, constants.keys.sort)
-puts "\n\n"
-print_function_bindings($stdout, functions)
+def write_constants_file(io, constants)
+    io.puts("#include \"glewby-constants.h\"\n\n")
+    
+    io.puts "void init_gl_constants(void) {"
+    print_constant_bindings(io, constants.keys.sort)
+    io.puts "}"
+end
 
-puts <<EOF
-}
+def write_functions_file(io, functions)
+    io.puts("#include \"glewby-functions.h\"\n\n")
+    
+    functions.keys.sort.each do |name|
+        fn = functions[name]
+        print_function(io, fn)
+    end
+    
+    io.puts "void init_gl_functions(void) {"
+    print_function_bindings(io, functions)
+    io.puts "}"
+end
 
-#include "GLEWbyEnd.h"
-EOF
+def main(args)
+    extensions, constants, functions =
+        parse_header(args[0], DevNull.new)
+    
+    File.open('glewby-extensions.c', 'wb') do |file|
+        write_extensions_file(file, extensions)
+    end
+    
+    File.open('glewby-constants.c', 'wb') do |file|
+        write_constants_file(file, constants)
+    end
+    
+    File.open('glewby-functions.c', 'wb') do |file|
+        write_functions_file(file, functions)
+    end
+end
+
+main(ARGV)

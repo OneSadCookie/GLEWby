@@ -1,11 +1,8 @@
-#include <ruby.h>
-#include <GL/glew.h>
+#ifndef glewby_types_h
+#define glewby_types_h
 
-#if defined(_WIN32)
-    #define DLLEXPORT __declspec(dllexport)
-#else
-    #define DLLEXPORT
-#endif
+#include <GL/glew.h>
+#include <ruby.h>
 
 /***********************************************************/
 /* Ruby To C type conversion                               */
@@ -81,40 +78,32 @@ R2C_VIA_STRING(GLbyteStar, GLbyte *)
 #define r2c_GLubyteConstStar r2c_GLubyteStar
 #define r2c_GLbyteConstStar r2c_GLbyteStar
 
-#define R2C_ARRAY_RAW(type, name)                         \
-    static type *r2c_##name##Star(VALUE value) {          \
-        long n = RARRAY(value)->len;                      \
-        type *array = malloc(n * sizeof(type));           \
-        long i;                                           \
-        for (i = 0; i < n; ++i) {                         \
-            array[i] = r2c_##name(RARRAY(value)->ptr[i]); \
-        }                                                 \
-        return array;                                     \
-    }
-#define R2C_ARRAY(type) R2C_ARRAY_RAW(type, type)
+#define DECLARE_R2C_ARRAY_RAW(type, name)       \
+    extern type *r2c_##name##Star(VALUE value);
+#define DECLARE_R2C_ARRAY(type) DECLARE_R2C_ARRAY_RAW(type, type)
 
-R2C_ARRAY(GLboolean)
-R2C_ARRAY(GLushort)
-R2C_ARRAY(GLuint)
-R2C_ARRAY(GLsizei)
-R2C_ARRAY(GLenum)
-R2C_ARRAY(GLhalf)
-R2C_ARRAY(GLhandleARB)
-R2C_ARRAY(GLuint64EXT)
+DECLARE_R2C_ARRAY(GLboolean)
+DECLARE_R2C_ARRAY(GLushort)
+DECLARE_R2C_ARRAY(GLuint)
+DECLARE_R2C_ARRAY(GLsizei)
+DECLARE_R2C_ARRAY(GLenum)
+DECLARE_R2C_ARRAY(GLhalf)
+DECLARE_R2C_ARRAY(GLhandleARB)
+DECLARE_R2C_ARRAY(GLuint64EXT)
 
-R2C_ARRAY(GLshort)
-R2C_ARRAY(GLint)
-R2C_ARRAY(GLint64EXT)
+DECLARE_R2C_ARRAY(GLshort)
+DECLARE_R2C_ARRAY(GLint)
+DECLARE_R2C_ARRAY(GLint64EXT)
 
-R2C_ARRAY(GLfloat)
-R2C_ARRAY(GLdouble)
-R2C_ARRAY(GLclampf)
+DECLARE_R2C_ARRAY(GLfloat)
+DECLARE_R2C_ARRAY(GLdouble)
+DECLARE_R2C_ARRAY(GLclampf)
 
-R2C_ARRAY_RAW(void *, voidStar)
+DECLARE_R2C_ARRAY_RAW(void *, voidStar)
 #define r2c_GLvoidStarStar r2c_voidStarStar
 
-R2C_ARRAY_RAW(GLchar *, GLcharStar)
-R2C_ARRAY_RAW(GLcharARB *, GLcharARBStar)
+DECLARE_R2C_ARRAY_RAW(GLchar *, GLcharStar)
+DECLARE_R2C_ARRAY_RAW(GLcharARB *, GLcharARBStar)
 
 #define r2c_GLcharConstStarStar r2c_GLcharStarStar
 #define r2c_GLcharARBConstStarStar r2c_GLcharARBStarStar
@@ -137,7 +126,7 @@ R2C_ARRAY_RAW(GLcharARB *, GLcharARBStar)
 #define r2c_GLvoidConstStarStar r2c_voidStarStar
 #define r2c_GLvoidConstStarConstStar r2c_voidStarStar
 
-R2C_ARRAY_RAW(GLboolean *, GLbooleanStar)
+DECLARE_R2C_ARRAY_RAW(GLboolean *, GLbooleanStar)
 
 #define r2c_GLbooleanConstStarStar r2c_GLbooleanStarStar
 
@@ -145,13 +134,13 @@ R2C_ARRAY_RAW(GLboolean *, GLbooleanStar)
 /* C to Ruby type conversion                               */
 /***********************************************************/
 
-static VALUE c2r_GLboolean(GLboolean value) {
+static inline VALUE c2r_GLboolean(GLboolean value) {
     return value ? Qtrue : Qfalse;
 }
 
-#define C2R_VIA(type, converter)          \
-    static VALUE c2r_##type(type value) { \
-        return converter(value);          \
+#define C2R_VIA(type, converter)                 \
+    static inline VALUE c2r_##type(type value) { \
+        return converter(value);                 \
     }
 
 /* long long is 64-bit everywhere I know of... */
@@ -174,11 +163,12 @@ C2R_VIA_LONG(GLintptr)
 C2R_VIA_DOUBLE(GLfloat)
 C2R_VIA_DOUBLE(GLdouble)
 
-static VALUE c2r_GLubyteConstStar(const GLubyte *value) {
+static inline VALUE c2r_GLubyteConstStar(
+        const GLubyte *value) {
     return rb_str_new2((const char *)value);
 }
 
-static VALUE c2r_voidStar(void *value) {
+static inline VALUE c2r_voidStar(void *value) {
     /* TODO - make a RawPointer class for this */
     return Qnil;
 }
@@ -189,60 +179,23 @@ static VALUE c2r_voidStar(void *value) {
 /* Write-back to Ruby array out parameters                 */
 /***********************************************************/
 
-#define C2R_WRITEBACK_ARRAY(type)                         \
-    static void c2r_writeback_##type##Star(               \
-            const type *array, VALUE value) {             \
-        long n = RARRAY(value)->len;                      \
-        long i;                                           \
-        for (i = 0; i < n; ++i) {                         \
-            RARRAY(value)->ptr[i] = c2r_##type(array[i]); \
-        }                                                 \
-    }
+#define DECLARE_C2R_WRITEBACK_ARRAY(type)    \
+    extern void c2r_writeback_##type##Star(  \
+            const type *array, VALUE value);
 
-C2R_WRITEBACK_ARRAY(GLboolean)
-C2R_WRITEBACK_ARRAY(GLushort)
-C2R_WRITEBACK_ARRAY(GLuint)
-C2R_WRITEBACK_ARRAY(GLsizei)
-C2R_WRITEBACK_ARRAY(GLenum)
-C2R_WRITEBACK_ARRAY(GLhandleARB)
-C2R_WRITEBACK_ARRAY(GLuint64EXT)
+DECLARE_C2R_WRITEBACK_ARRAY(GLboolean)
+DECLARE_C2R_WRITEBACK_ARRAY(GLushort)
+DECLARE_C2R_WRITEBACK_ARRAY(GLuint)
+DECLARE_C2R_WRITEBACK_ARRAY(GLsizei)
+DECLARE_C2R_WRITEBACK_ARRAY(GLenum)
+DECLARE_C2R_WRITEBACK_ARRAY(GLhandleARB)
+DECLARE_C2R_WRITEBACK_ARRAY(GLuint64EXT)
 
-C2R_WRITEBACK_ARRAY(GLshort)
-C2R_WRITEBACK_ARRAY(GLint)
-C2R_WRITEBACK_ARRAY(GLint64EXT)
+DECLARE_C2R_WRITEBACK_ARRAY(GLshort)
+DECLARE_C2R_WRITEBACK_ARRAY(GLint)
+DECLARE_C2R_WRITEBACK_ARRAY(GLint64EXT)
 
-C2R_WRITEBACK_ARRAY(GLfloat)
-C2R_WRITEBACK_ARRAY(GLdouble)
+DECLARE_C2R_WRITEBACK_ARRAY(GLfloat)
+DECLARE_C2R_WRITEBACK_ARRAY(GLdouble)
 
-/***********************************************************/
-/* Ruby Registration                                       */
-/***********************************************************/
-
-#define RGL_EXT(name)                         \
-    rb_define_module_function(                \
-        mGLEW, "GLEW_"#name, rglext_##name, 0)
-
-#define RGL_ENUM(name)                           \
-    rb_define_const(                             \
-        mGLEW, "GL_"#name, c2r_GLenum(GL_##name))
-
-#define RGL_FUNCTION(name, args)           \
-    rb_define_module_function(             \
-        mGLEW, "gl"#name, rgl_##name, args)
-
-/***********************************************************/
-/* Other GLEW Functions                                    */
-/***********************************************************/
-
-static VALUE rglew_Init(VALUE self) {
-    return c2r_GLenum(glewInit());
-}
-
-static VALUE mGLEW = Qnil;
-
-static void init_others(void) {
-    mGLEW = rb_define_module("GLEW");
-    
-    rb_define_module_function(
-        mGLEW, "glewInit", rglew_Init, 0);
-}
+#endif
