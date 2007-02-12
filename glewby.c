@@ -2,6 +2,7 @@
 #include "glewby-extensions.h"
 #include "glewby-constants.h"
 #include "glewby-functions.h"
+#include "glewby-pointer.h"
 
 #if defined(_WIN32)
     #define DLLEXPORT __declspec(dllexport)
@@ -24,4 +25,6 @@ DLLEXPORT void Init_glewby(void) {
     init_gl_extensions();
     init_gl_constants();
     init_gl_functions();
+    
+    glewby_init_pointer();
 }

@@ -4,6 +4,8 @@
 #include <GL/glew.h>
 #include <ruby.h>
 
+#include "glewby-pointer.h"
+
 /***********************************************************/
 /* Ruby To C type conversion                               */
 /***********************************************************/
@@ -169,8 +171,7 @@ static inline VALUE c2r_GLubyteConstStar(
 }
 
 static inline VALUE c2r_voidStar(void *value) {
-    /* TODO - make a RawPointer class for this */
-    return Qnil;
+    return glewby_wrap_pointer(value);
 }
 
 #define c2r_GLvoidStar c2r_voidStar

@@ -19,6 +19,7 @@ GENERATED_SOURCE = [
 ]
 
 SOURCE = GENERATED_SOURCE + [
+    'glewby-pointer.c',
     'glewby-types.c',
     'glewby.c']
 
