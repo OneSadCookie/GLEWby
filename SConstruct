@@ -36,8 +36,7 @@ class GLEWbyWin32(ThirdParty):
     
     def environment(self, base_env):
         env = ThirdParty.environment(self, base_env)
-        env.Append(
-            tools = [ 'mingw' ])
+        env = env.Copy(tools = [ 'mingw' ])
         return env
     
     def glewby_extension(self, env, *args, **kwargs):
@@ -109,8 +108,10 @@ base_env.Command(
     action = 'ruby glewby.rb glew/include/GL/glew.h Build/Generated')
 
 if os.name == 'nt':
-    glewby = build_glewby(GLEWbyWin32())
-    base_env.Install(dir = '.', source = glewby)
+    build_glewby(GLEWbyWin32())
+    base_env.Install(
+        dir = '.',
+        source = 'Build/glewby.dll')
 else:
     # TODO handle Linux
     glewby_ppc = build_glewby(GLEWbyMacOSX('ppc'))
