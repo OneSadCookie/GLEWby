@@ -1,0 +1,18 @@
+diff -cr glew/config/Makefile.darwin glew-universal/config/Makefile.darwin
+*** glew/config/Makefile.darwin	Thu Jan  6 09:19:03 2005
+--- glew-universal/config/Makefile.darwin	Tue Feb 13 22:08:19 2007
+***************
+*** 1,6 ****
+  NAME = $(GLEW_NAME)
+! CC = cc
+! LD = cc
+  CFLAGS.EXTRA = -no-cpp-precomp -dynamic -fno-common
+  ifneq (undefined, $(origin GLEW_MX))
+  CFLAGS.EXTRA += -DGLEW_MX
+--- 1,6 ----
+  NAME = $(GLEW_NAME)
+! CC = cc -arch i386 -arch ppc -isysroot /Developer/SDKs/MacOSX10.4u.sdk
+! LD = cc -arch i386 -arch ppc -isysroot /Developer/SDKs/MacOSX10.4u.sdk
+  CFLAGS.EXTRA = -no-cpp-precomp -dynamic -fno-common
+  ifneq (undefined, $(origin GLEW_MX))
+  CFLAGS.EXTRA += -DGLEW_MX
