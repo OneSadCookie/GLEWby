@@ -53,19 +53,23 @@ class GLEWbyWin32(ThirdParty):
 class GLEWbyMacOSX(ThirdParty):
     def environment(self, base_env):
         env = ThirdParty.environment(self, base_env)
+        env.Append(
+            ENV = { 'MACOSX_DEPLOYMENT_TARGET': '10.4' })
         env.Append(CCFLAGS = [
             '-arch', self.arch,
-            '-isysroot', '/Developer/SDKs/MacOSX10.4u.sdk' ])
+            '-isysroot', '/Developer/SDKs/MacOSX10.4u.sdk',
+            '-fvisibility=hidden' ])
         env.Append(LINKFLAGS = [
             '-arch', self.arch,
-            '-isysroot', '/Developer/SDKs/MacOSX10.4u.sdk' ])
+            '-isysroot', '/Developer/SDKs/MacOSX10.4u.sdk',
+            '-undefined', 'dynamic_lookup' ])
         return env
     
     def glewby_extension(self, env, *args, **kwargs):
         return env.LoadableModule(
             *args,
             **union(kwargs, {
-                'LIBS': [ 'GLEW', 'ruby' ],
+                'LIBS': [ 'GLEW' ],
                 'FRAMEWORKS': [ 'OpenGL' ]
             }))
 
