@@ -17,9 +17,11 @@
 
 R2C_VIA(GLboolean, RTEST)
 
+#if defined(GL_EXT_timer_query) /* && GL_EXT_timer_query ? */
 /* long long is 64-bit everywhere I know of... */
 R2C_VIA(GLuint64EXT, NUM2ULL)
 R2C_VIA(GLint64EXT, NUM2LL)
+#endif
 
 #define R2C_VIA_ULONG(type) R2C_VIA(type, NUM2ULONG)
 R2C_VIA_ULONG(GLubyte)
@@ -91,11 +93,14 @@ DECLARE_R2C_ARRAY(GLsizei)
 DECLARE_R2C_ARRAY(GLenum)
 DECLARE_R2C_ARRAY(GLhalf)
 DECLARE_R2C_ARRAY(GLhandleARB)
-DECLARE_R2C_ARRAY(GLuint64EXT)
 
 DECLARE_R2C_ARRAY(GLshort)
 DECLARE_R2C_ARRAY(GLint)
+
+#if defined(GL_EXT_timer_query) /* && GL_EXT_timer_query ? */
+DECLARE_R2C_ARRAY(GLuint64EXT)
 DECLARE_R2C_ARRAY(GLint64EXT)
+#endif
 
 DECLARE_R2C_ARRAY(GLfloat)
 DECLARE_R2C_ARRAY(GLdouble)
@@ -145,9 +150,11 @@ static inline VALUE c2r_GLboolean(GLboolean value) {
         return converter(value);                 \
     }
 
+#if defined(GL_EXT_timer_query) /* && GL_EXT_timer_query ? */
 /* long long is 64-bit everywhere I know of... */
 C2R_VIA(GLint64EXT, LL2NUM)
 C2R_VIA(GLuint64EXT, ULL2NUM)
+#endif
 
 #define C2R_VIA_ULONG(type) C2R_VIA(type, ULONG2NUM)
 C2R_VIA_ULONG(GLushort)
@@ -190,11 +197,14 @@ DECLARE_C2R_WRITEBACK_ARRAY(GLuint)
 DECLARE_C2R_WRITEBACK_ARRAY(GLsizei)
 DECLARE_C2R_WRITEBACK_ARRAY(GLenum)
 DECLARE_C2R_WRITEBACK_ARRAY(GLhandleARB)
-DECLARE_C2R_WRITEBACK_ARRAY(GLuint64EXT)
 
 DECLARE_C2R_WRITEBACK_ARRAY(GLshort)
 DECLARE_C2R_WRITEBACK_ARRAY(GLint)
+
+#if defined(GL_EXT_timer_query) /* && GL_EXT_timer_query ? */
+DECLARE_C2R_WRITEBACK_ARRAY(GLuint64EXT)
 DECLARE_C2R_WRITEBACK_ARRAY(GLint64EXT)
+#endif
 
 DECLARE_C2R_WRITEBACK_ARRAY(GLfloat)
 DECLARE_C2R_WRITEBACK_ARRAY(GLdouble)

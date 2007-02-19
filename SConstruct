@@ -72,6 +72,28 @@ class GLEWbyMacOSX(ThirdParty):
                 'FRAMEWORKS': [ 'OpenGL' ]
             }))
 
+class GLEWbyLinux(GCC):
+    def __init__(self, arch):
+        self.arch = arch
+    
+    def environment(self, base_env):
+        env = GCC.environment(self, base_env)
+        env.Append(CCFLAGS = [
+            '-fvisibility=hidden' ])
+        env.Append(CPPPATH = [
+            '/usr/lib/ruby/1.8/i486-linux'])
+        return env
+    
+    def glewby_extension(self, env, *args, **kwargs):
+        return env.SharedLibrary(
+            *args,
+            **union(kwargs, {
+                'LIBS': [ 'GLEW', 'GL' ]
+            }))
+    
+    def build_dir(self):
+        return 'Build/' + self.arch
+
 def generated(source):
     return 'Build/Generated/' + source
 
@@ -101,22 +123,41 @@ GENERATED_SOURCE = [
     generated('glewby-constants.c'),
     generated('glewby-functions.c')
 ]
+
+HEADER_PATHS = [ 'glew/include/GL/glew.h', '/usr/include/GL/glew.h' ]    
+
+def glew_header():
+    for path in HEADER_PATHS:
+        try:
+            os.stat(path)
+            return path
+        except:
+            pass
+    raise "Can't find GLEW header"
     
 base_env.Command(
     target = GENERATED_SOURCE,
     source = ['glewby.rb'],
-    action = 'ruby glewby.rb glew/include/GL/glew.h Build/Generated')
+    action = 'ruby glewby.rb ' + glew_header() + ' Build/Generated')
 
 if os.name == 'nt':
     build_glewby(GLEWbyWin32())
     base_env.Install(
         dir = '.',
         source = 'Build/glewby.dll')
+elif os.name == 'posix':
+    kernel_name = os.popen('uname -s').read()
+    if kernel_name == "Linux\n": # is that enough?
+        glewby = build_glewby(GLEWbyLinux('i386'))
+        base_env.InstallAs(
+            target = 'glewby.so',
+            source = glewby)
+    elif kernel_name == "Darwin\n":
+        glewby_ppc = build_glewby(GLEWbyMacOSX('ppc'))
+        glewby_i386 = build_glewby(GLEWbyMacOSX('i386'))
+        base_env.Command(
+            target = 'glewby.bundle',
+            source = [ glewby_ppc, glewby_i386 ],
+            action = 'lipo $SOURCES -create -output $TARGET')
 else:
-    # TODO handle Linux
-    glewby_ppc = build_glewby(GLEWbyMacOSX('ppc'))
-    glewby_i386 = build_glewby(GLEWbyMacOSX('i386'))
-    base_env.Command(
-        target = 'glewby.bundle',
-        source = [ glewby_ppc, glewby_i386 ],
-        action = 'lipo $SOURCES -create -output $TARGET')
+    raise 'Unknown OS'
