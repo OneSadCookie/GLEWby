@@ -1,0 +1,9 @@
+<% @extension_names = extensions.keys.sort %>#include "glewby-extensions.h"
+
+<% @extension_names.each do |extension| %>static VALUE rglext_<%= extension %>(VALUE r_GLEW) {
+    return c2r_GLboolean(GLEW_<%= extension %>);
+}
+
+<% end %>void init_gl_extensions(void) {
+<% @extension_names.each do |extension| %>    RGL_EXT(<%= extension %>);
+<% end %>}

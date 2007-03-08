@@ -1,0 +1,63 @@
+#include "glewby-functions.h"
+<%
+def r_args(fn)
+    (['VALUE r_GLEW'] + fn.args.collect do |arg|
+        'VALUE r_' + arg.name
+    end).join(', ')
+end
+
+def sanitize_type(type)
+    type.to_s.
+        gsub(/\s/, '').
+        gsub(/\*/, 'Star').
+        gsub(/const/, 'Const').
+        gsub(/\W/, '_')
+end
+
+def r2c(type)
+    'r2c_' + sanitize_type(type)
+end
+
+def c2r(type)
+    'c2r_' + sanitize_type(type)
+end
+
+def c2r_writeback(type)
+    'c2r_writeback_' + sanitize_type(type)
+end
+
+def needs_writeback(type)
+    !type.type.const? &&
+        !type.type.pointer? &&
+        type.type.name !~ /void|byte|char/
+end
+    
+def needs_free(type)
+    !type.type.pointer? &&
+        type.type.name !~ /void|byte|char/
+end
+
+def c_args(fn)
+    fn.args.collect do |arg|
+        if arg.type.freeable_copy != arg.type then
+            "(#{arg.type})#{arg.name}"
+        else
+            arg.name
+        end
+    end.join(", ")
+end 
+
+functions.each do |name, fn| %>
+static VALUE rgl_<%= fn.name %>(<%= r_args(fn) %>)
+{
+    <% fn.args.each do |arg| %><%= arg.type.freeable_copy %> <%= arg.name %> = <%= r2c(arg.type) %>(r_<%= arg.name %>);
+    <% end; if fn.return_type.void? then %><% else %>VALUE result = <%= c2r(fn.return_type) %>(<% end %>gl<%= fn.name %>(<%= c_args(fn) %><% if fn.return_type.void? then %>);
+    VALUE result = Qnil;<% else %>));<% end; fn.args.each do |arg| if arg.type.pointer? then if needs_writeback(arg.type) then %>
+    <%= c2r_writeback(arg.type) %>(<%= arg.name %>, r_<%= arg.name %>);<% end; if needs_free(arg.type) then %>
+    free(<%= arg.name %>);<% end; end; end %>
+    return result;
+}
+<% end %>
+void init_gl_functions(void) {
+<% functions.each do |name, fn| %>    RGL_FUNCTION(<%= fn.name %>, <%= fn.args.size %>);
+<% end %>}

@@ -1,0 +1,5 @@
+#include "glewby-constants.h"
+
+void init_gl_constants(void) {
+<% constants.keys.sort.each do |constant| %>    RGL_ENUM(<%= constant %>);
+<% end %>}

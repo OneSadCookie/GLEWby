@@ -1,5 +1,8 @@
 #!/usr/bin/env ruby
 
+require 'erb'
+require 'getoptlong'
+
 IDENTIFIER = '[A-Za-z_][A-Za-z_0-9]*'
 TYPE = '(?:const\s+)?' + IDENTIFIER + '(?:\s*(?:const\s+)?\s*\*)*'
 ARG = TYPE + '\s*(?:' + IDENTIFIER + ')?(?:\s*\[\d*\])*'
@@ -181,165 +184,37 @@ def parse_header(path, rejects)
     return extensions, constants, functions
 end
 
-def r_args(fn)
-    (['VALUE r_GLEW'] + fn.args.collect do |arg|
-        'VALUE r_' + arg.name
-    end).join(', ')
-end
-
-def sanitize_type(type)
-    type.to_s.
-        gsub(/\s/, '').
-        gsub(/\*/, 'Star').
-        gsub(/const/, 'Const').
-        gsub(/\W/, '_')
-end
-
-def r2c(type)
-    'r2c_' + sanitize_type(type)
-end
-
-def c2r(type)
-    'c2r_' + sanitize_type(type)
-end
-
-def c2r_writeback(type)
-    'c2r_writeback_' + sanitize_type(type)
-end
-
-def needs_writeback(type)
-    !type.type.const? &&
-        !type.type.pointer? &&
-        type.type.name !~ /void|byte|char/
-end
+def main(opts)
+    glew_header = nil
+    template_dir = nil
+    output_dir = nil
     
-def needs_free(type)
-    !type.type.pointer? &&
-        type.type.name !~ /void|byte|char/
-end
-    
-def print_extension_function(io, name)
-    io.puts <<EOE
-static VALUE rglext_#{name}(VALUE r_GLEW) {
-    return c2r_GLboolean(GLEW_#{name});
-}
-
-EOE
-end
-
-def print_function(io, fn)
-    io.puts "static VALUE rgl_#{fn.name}(#{r_args(fn)}) {"
-    fn.args.each do |arg|
-        io.puts "    #{arg.type.freeable_copy} #{arg.name} = #{r2c(arg.type)}(r_#{arg.name});"
-    end
-    
-    funcall = 'gl' + fn.name + '(' + fn.args.collect do |arg|
-        if arg.type.freeable_copy != arg.type then
-            "(#{arg.type})#{arg.name}"
-        else
-            arg.name
-        end
-    end.join(', ') + ')'
-    
-    if fn.return_type.void? then
-        io.puts "    #{funcall};\n    VALUE result = Qnil;"
-    else
-        io.puts "    VALUE result = #{c2r(fn.return_type)}(#{funcall});"
-    end
-    
-    fn.args.each do |arg|
-        if arg.type.pointer? then
-            if needs_writeback(arg.type) then
-                io.puts "    #{c2r_writeback(arg.type)}(#{arg.name}, r_#{arg.name});"
-            end
-            if needs_free(arg.type) then
-                io.puts "    free(#{arg.name});"
-            end
+    opts.each do |opt, arg|
+        case opt
+            when '--glew-header'
+                glew_header = arg
+            when '--template-directory'
+                template_dir = arg
+            when '--output-directory'
+                output_dir = arg
         end
     end
-    
-    io.puts "    return result;\n}\n\n"
-end
-
-def print_extension_bindings(io, list)
-    list.each do |extension|
-        io.puts <<EOE
-    RGL_EXT(#{extension});
-EOE
-    end
-end
-
-def print_constant_bindings(io, list)
-    list.each do |constant|
-        io.puts <<EOC
-    RGL_ENUM(#{constant});
-EOC
-    end
-end
-
-def print_function_bindings(io, hash)
-    hash.keys.sort.each do |name|
-        fn = hash[name]
-        io.puts <<EOF
-    RGL_FUNCTION(#{fn.name}, #{fn.args.size});
-EOF
-    end
-end
-
-def write_extensions_file(io, extensions)
-    io.puts("#include \"glewby-extensions.h\"\n\n")
-    
-    extensions.keys.sort.each do |name|
-        print_extension_function(io, name)
-    end
-    
-    io.puts "void init_gl_extensions(void) {"
-    print_extension_bindings(io, extensions.keys.sort)
-    io.puts "}"
-end
-
-def write_constants_file(io, constants)
-    io.puts("#include \"glewby-constants.h\"\n\n")
-    
-    io.puts "void init_gl_constants(void) {"
-    print_constant_bindings(io, constants.keys.sort)
-    io.puts "}"
-end
-
-def write_functions_file(io, functions)
-    io.puts("#include \"glewby-functions.h\"\n\n")
-    
-    functions.keys.sort.each do |name|
-        fn = functions[name]
-        print_function(io, fn)
-    end
-    
-    io.puts "void init_gl_functions(void) {"
-    print_function_bindings(io, functions)
-    io.puts "}"
-end
-
-def main(args)
-    glew_header = args[0]
-    output_prefix = args[1]
     
     extensions, constants, functions =
         parse_header(glew_header, DevNull.new)
     
-    File.open(output_prefix +
-            '/glewby-extensions.c', 'wb') do |file|
-        write_extensions_file(file, extensions)
-    end
-    
-    File.open(output_prefix +
-            '/glewby-constants.c', 'wb') do |file|
-        write_constants_file(file, constants)
-    end
-    
-    File.open(output_prefix +
-            '/glewby-functions.c', 'wb') do |file|
-        write_functions_file(file, functions)
+    Dir[template_dir + '/*.r*'].each do |template_file_path|
+        template = ERB.new(File.read(template_file_path))
+        basename = File.basename(template_file_path)
+        new_basename = basename.gsub(/\.r/, '.')
+        output_path = output_dir + '/' + new_basename
+        File.open(output_path, 'wb') do |file|
+            file.write(template.result(binding))
+        end
     end
 end
 
-main(ARGV)
+main(GetoptLong.new(
+    [ '--glew-header', GetoptLong::REQUIRED_ARGUMENT ],
+    [ '--template-directory', GetoptLong::REQUIRED_ARGUMENT ],
+    [ '--output-directory', GetoptLong::REQUIRED_ARGUMENT ]))

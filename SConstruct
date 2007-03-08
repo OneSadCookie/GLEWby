@@ -1,4 +1,4 @@
-import os, re
+import glob, os, re
 
 base_env = Environment(ENV = os.environ)
 
@@ -137,8 +137,8 @@ def glew_header():
     
 base_env.Command(
     target = GENERATED_SOURCE,
-    source = ['glewby.rb'],
-    action = 'ruby glewby.rb ' + glew_header() + ' Build/Generated')
+    source = ['glewby.rb'] + glob.glob('Templates/Ruby/*.rc'),
+    action = 'ruby glewby.rb --glew-header=' + glew_header() + ' --output-directory=Build/Generated --template-dir=Templates/Ruby')
 
 if os.name == 'nt':
     build_glewby(GLEWbyWin32())
