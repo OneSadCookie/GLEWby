@@ -6,6 +6,11 @@
 
 #define R2C_ARRAY_RAW(type, name)                         \
     type *r2c_##name##Star(VALUE value) {                 \
+        if (value == Qnil)                                \
+        {                                                 \
+            return NULL;                                  \
+        }                                                 \
+                                                          \
         long n = RARRAY(value)->len;                      \
         type *array = malloc(n * sizeof(type));           \
         long i;                                           \

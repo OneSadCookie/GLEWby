@@ -10,7 +10,7 @@ def union(a, b):
 class GCC:
     def environment(self, base_env):
         return base_env.Copy(
-            CCFLAGS = [ '-Wall', '-W', '-Wno-unused-parameter', '-Werror' ],
+            CCFLAGS = [ '-Wall', '-W', '-Wno-unused-parameter', '-Werror', '-g', '-O2' ],
             CPPPATH = [ 'glew/include', 'Source' ],
             LIBPATH = [ 'glew/lib' ],
             CPPDEFINES = { 'GLEW_STATIC': 1 })
