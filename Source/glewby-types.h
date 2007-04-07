@@ -56,21 +56,17 @@ R2C_VIA_LONG(GLsizeiptr)
 R2C_VIA_LONG(GLintptrARB)
 R2C_VIA_LONG(GLsizeiptrARB)
 
-#define r2c_GLintConst r2c_GLint
-
 #define R2C_VIA_DOUBLE(type) R2C_VIA(type, NUM2DBL)
 R2C_VIA_DOUBLE(GLfloat)
 R2C_VIA_DOUBLE(GLdouble)
 R2C_VIA_DOUBLE(GLclampf)
 R2C_VIA_DOUBLE(GLclampd)
 
-#define r2c_GLfloatConst r2c_GLfloat
-
 static inline void *r2c_voidStar(VALUE value) {
-    /* for VBOs/PBOs */
     if (NIL_P(value)) {
         return NULL;
     } else if (rb_obj_is_kind_of(value, rb_cNumeric)) {
+        /* for VBOs/PBOs */
         return (void *)NUM2ULONG(value);
     } else {
         return StringValuePtr(value);
