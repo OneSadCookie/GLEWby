@@ -90,7 +90,7 @@ class PointerType < Type
     end
     
     def freeable_copy
-        self.class.new(@type.freeable_copy, const?)
+        self.class.new(@type.freeable_copy, false)
     end
     
     def void?

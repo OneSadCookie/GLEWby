@@ -7,6 +7,18 @@
 #include "glewby-pointer.h"
 
 /***********************************************************/
+/* Typedefs for basic types                                */
+/***********************************************************/
+
+typedef void *            voidStar;
+typedef GLvoid *          GLvoidStar;
+typedef GLcharARB *       GLcharARBStar;
+typedef GLchar *          GLcharStar;
+typedef GLbyte *          GLbyteStar;
+typedef GLubyte *         GLubyteStar;
+
+
+/***********************************************************/
 /* Ruby To C type conversion                               */
 /***********************************************************/
 
@@ -34,6 +46,8 @@ R2C_VIA_ULONG(GLhandleARB)
 R2C_VIA_ULONG(GLhalf)
 
 #define R2C_VIA_LONG(type) R2C_VIA(type, NUM2LONG)
+R2C_VIA_LONG(GLchar)
+R2C_VIA_LONG(GLcharARB)
 R2C_VIA_LONG(GLbyte)
 R2C_VIA_LONG(GLshort)
 R2C_VIA_LONG(GLint)
@@ -64,11 +78,12 @@ static inline void *r2c_voidStar(VALUE value) {
 }
 
 #define r2c_GLvoidStar r2c_voidStar
-#define r2c_GLvoidConstStar r2c_voidStar
-#define r2c_voidConstStar r2c_voidStar
 
 #define R2C_VIA_STRING(name, type)               \
     static inline type r2c_##name(VALUE value) { \
+        if (value == Qnil) {                     \
+            return NULL;                         \
+        }                                        \
         return (type)StringValuePtr(value);      \
     }
 
@@ -77,65 +92,14 @@ R2C_VIA_STRING(GLcharARBStar, GLcharARB *)
 R2C_VIA_STRING(GLubyteStar, GLubyte *)
 R2C_VIA_STRING(GLbyteStar, GLbyte *)
 
-#define r2c_GLcharConstStar r2c_GLcharStar
-#define r2c_GLcharARBConstStar r2c_GLcharARBStar
-#define r2c_GLubyteConstStar r2c_GLubyteStar
-#define r2c_GLbyteConstStar r2c_GLbyteStar
-
-#define DECLARE_R2C_ARRAY_RAW(type, name)       \
+#define DECLARE_R2C_ARRAY_RAW(type, name)            \
     extern type *r2c_##name##Star(VALUE value);
 #define DECLARE_R2C_ARRAY(type) DECLARE_R2C_ARRAY_RAW(type, type)
 
-DECLARE_R2C_ARRAY(GLboolean)
-DECLARE_R2C_ARRAY(GLushort)
-DECLARE_R2C_ARRAY(GLuint)
-DECLARE_R2C_ARRAY(GLsizei)
-DECLARE_R2C_ARRAY(GLenum)
-DECLARE_R2C_ARRAY(GLhalf)
-DECLARE_R2C_ARRAY(GLhandleARB)
+#define SIMPLE_TYPE(type) DECLARE_R2C_ARRAY(type)
+#include "glewby-simple-types.h"
+#undef SIMPLE_TYPE
 
-DECLARE_R2C_ARRAY(GLshort)
-DECLARE_R2C_ARRAY(GLint)
-
-#if defined(GL_EXT_timer_query) /* && GL_EXT_timer_query ? */
-DECLARE_R2C_ARRAY(GLuint64EXT)
-DECLARE_R2C_ARRAY(GLint64EXT)
-#endif
-
-DECLARE_R2C_ARRAY(GLfloat)
-DECLARE_R2C_ARRAY(GLdouble)
-DECLARE_R2C_ARRAY(GLclampf)
-
-DECLARE_R2C_ARRAY_RAW(void *, voidStar)
-#define r2c_GLvoidStarStar r2c_voidStarStar
-
-DECLARE_R2C_ARRAY_RAW(GLchar *, GLcharStar)
-DECLARE_R2C_ARRAY_RAW(GLcharARB *, GLcharARBStar)
-
-#define r2c_GLcharConstStarStar r2c_GLcharStarStar
-#define r2c_GLcharARBConstStarStar r2c_GLcharARBStarStar
-
-#define r2c_GLbooleanConstStar r2c_GLbooleanStar
-#define r2c_GLushortConstStar r2c_GLushortStar
-#define r2c_GLuintConstStar r2c_GLuintStar
-#define r2c_GLsizeiConstStar r2c_GLsizeiStar
-#define r2c_GLenumConstStar r2c_GLenumStar
-#define r2c_GLhalfConstStar r2c_GLhalfStar
-
-#define r2c_GLshortConstStar r2c_GLshortStar
-#define r2c_GLintConstStar r2c_GLintStar
-
-#define r2c_GLfloatConstStar r2c_GLfloatStar
-#define r2c_GLdoubleConstStar r2c_GLdoubleStar
-#define r2c_GLclampfConstStar r2c_GLclampfStar
-
-#define r2c_voidConstStarStar r2c_voidStarStar
-#define r2c_GLvoidConstStarStar r2c_voidStarStar
-#define r2c_GLvoidConstStarConstStar r2c_voidStarStar
-
-DECLARE_R2C_ARRAY_RAW(GLboolean *, GLbooleanStar)
-
-#define r2c_GLbooleanConstStarStar r2c_GLbooleanStarStar
 
 /***********************************************************/
 /* C to Ruby type conversion                               */
@@ -157,25 +121,41 @@ C2R_VIA(GLuint64EXT, ULL2NUM)
 #endif
 
 #define C2R_VIA_ULONG(type) C2R_VIA(type, ULONG2NUM)
+C2R_VIA_ULONG(GLubyte)
 C2R_VIA_ULONG(GLushort)
 C2R_VIA_ULONG(GLuint)
 C2R_VIA_ULONG(GLsizei)
 C2R_VIA_ULONG(GLenum)
+C2R_VIA_ULONG(GLbitfield)
 C2R_VIA_ULONG(GLhandleARB)
+C2R_VIA_ULONG(GLhalf)
 
 #define C2R_VIA_LONG(type) C2R_VIA(type, LONG2NUM)
+C2R_VIA_LONG(GLchar)
+C2R_VIA_LONG(GLcharARB)
+C2R_VIA_LONG(GLbyte)
 C2R_VIA_LONG(GLshort)
 C2R_VIA_LONG(GLint)
 C2R_VIA_LONG(GLintptr)
+C2R_VIA_LONG(GLsizeiptr)
+C2R_VIA_LONG(GLintptrARB)
+C2R_VIA_LONG(GLsizeiptrARB)
 
 #define C2R_VIA_DOUBLE(type) C2R_VIA(type, rb_float_new)
 C2R_VIA_DOUBLE(GLfloat)
 C2R_VIA_DOUBLE(GLdouble)
+C2R_VIA_DOUBLE(GLclampf)
+C2R_VIA_DOUBLE(GLclampd)
 
-static inline VALUE c2r_GLubyteConstStar(
-        const GLubyte *value) {
-    return rb_str_new2((const char *)value);
-}
+#define C2R_VIA_STRING(type)                     \
+    static inline VALUE c2r_##type(type value) { \
+        return rb_str_new2((const char *)value); \
+    }
+
+C2R_VIA_STRING(GLcharStar)
+C2R_VIA_STRING(GLcharARBStar)
+C2R_VIA_STRING(GLbyteStar)
+C2R_VIA_STRING(GLubyteStar)
 
 static inline VALUE c2r_voidStar(void *value) {
     return glewby_wrap_pointer(value);
@@ -183,30 +163,49 @@ static inline VALUE c2r_voidStar(void *value) {
 
 #define c2r_GLvoidStar c2r_voidStar
 
+
 /***********************************************************/
 /* Write-back to Ruby array out parameters                 */
 /***********************************************************/
 
 #define DECLARE_C2R_WRITEBACK_ARRAY(type)    \
     extern void c2r_writeback_##type##Star(  \
-            const type *array, VALUE value);
+        const type *array, VALUE value);
 
-DECLARE_C2R_WRITEBACK_ARRAY(GLboolean)
-DECLARE_C2R_WRITEBACK_ARRAY(GLushort)
-DECLARE_C2R_WRITEBACK_ARRAY(GLuint)
-DECLARE_C2R_WRITEBACK_ARRAY(GLsizei)
-DECLARE_C2R_WRITEBACK_ARRAY(GLenum)
-DECLARE_C2R_WRITEBACK_ARRAY(GLhandleARB)
+#define SIMPLE_TYPE(type) DECLARE_C2R_WRITEBACK_ARRAY(type)
+#include "glewby-simple-types.h"
+#undef SIMPLE_TYPE
 
-DECLARE_C2R_WRITEBACK_ARRAY(GLshort)
-DECLARE_C2R_WRITEBACK_ARRAY(GLint)
+/***********************************************************/
+/* Freeing of temporary storage                            */
+/***********************************************************/
 
-#if defined(GL_EXT_timer_query) /* && GL_EXT_timer_query ? */
-DECLARE_C2R_WRITEBACK_ARRAY(GLuint64EXT)
-DECLARE_C2R_WRITEBACK_ARRAY(GLint64EXT)
-#endif
+#define R2C_FREE(type)                                             \
+    static inline void r2c_free_##type##Star(type *pointer) {      \
+        free(pointer);                                             \
+    }
 
-DECLARE_C2R_WRITEBACK_ARRAY(GLfloat)
-DECLARE_C2R_WRITEBACK_ARRAY(GLdouble)
+#define SIMPLE_TYPE(type) R2C_FREE(type)
+#include "glewby-simple-types.h"
+#undef SIMPLE_TYPE
+
+/***********************************************************/
+/* Unusual extras                                          */
+/***********************************************************/
+
+/* only used by EdgeFlagPointerListIBM */
+static inline GLboolean * * r2c_GLbooleanStarStar(VALUE value) {
+    rb_notimplement();
+}
+static inline void c2r_writeback_GLbooleanStarStar(
+        GLboolean * *array, VALUE value) {
+    rb_notimplement();
+}
+static inline void r2c_free_GLbooleanStarStar(GLboolean * *pointer) {
+    rb_notimplement();
+}
+
+/* only used by glGetString */
+#define c2r_GLubyteConstStar(pointer) c2r_GLubyteStar((GLubyte *)pointer)
 
 #endif

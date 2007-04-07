@@ -21,32 +21,9 @@
     }
 #define R2C_ARRAY(type) R2C_ARRAY_RAW(type, type)
 
-R2C_ARRAY(GLboolean)
-R2C_ARRAY(GLushort)
-R2C_ARRAY(GLuint)
-R2C_ARRAY(GLsizei)
-R2C_ARRAY(GLenum)
-R2C_ARRAY(GLhalf)
-R2C_ARRAY(GLhandleARB)
-
-R2C_ARRAY(GLshort)
-R2C_ARRAY(GLint)
-
-#if defined(GL_EXT_timer_query) /* && GL_EXT_timer_query ? */
-R2C_ARRAY(GLuint64EXT)
-R2C_ARRAY(GLint64EXT)
-#endif
-
-R2C_ARRAY(GLfloat)
-R2C_ARRAY(GLdouble)
-R2C_ARRAY(GLclampf)
-
-R2C_ARRAY_RAW(void *, voidStar)
-
-R2C_ARRAY_RAW(GLchar *, GLcharStar)
-R2C_ARRAY_RAW(GLcharARB *, GLcharARBStar)
-
-R2C_ARRAY_RAW(GLboolean *, GLbooleanStar)
+#define SIMPLE_TYPE(type) R2C_ARRAY(type)
+#include "glewby-simple-types.h"
+#undef SIMPLE_TYPE
 
 /***********************************************************/
 /* Write-back to Ruby array out parameters                 */
@@ -62,20 +39,6 @@ R2C_ARRAY_RAW(GLboolean *, GLbooleanStar)
         }                                                 \
     }
 
-C2R_WRITEBACK_ARRAY(GLboolean)
-C2R_WRITEBACK_ARRAY(GLushort)
-C2R_WRITEBACK_ARRAY(GLuint)
-C2R_WRITEBACK_ARRAY(GLsizei)
-C2R_WRITEBACK_ARRAY(GLenum)
-C2R_WRITEBACK_ARRAY(GLhandleARB)
-
-C2R_WRITEBACK_ARRAY(GLshort)
-C2R_WRITEBACK_ARRAY(GLint)
-
-#if defined(GL_EXT_timer_query) /* && GL_EXT_timer_query ? */
-C2R_WRITEBACK_ARRAY(GLuint64EXT)
-C2R_WRITEBACK_ARRAY(GLint64EXT)
-#endif
-
-C2R_WRITEBACK_ARRAY(GLfloat)
-C2R_WRITEBACK_ARRAY(GLdouble)
+#define SIMPLE_TYPE(type) C2R_WRITEBACK_ARRAY(type)
+#include "glewby-simple-types.h"
+#undef SIMPLE_TYPE
