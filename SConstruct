@@ -1,6 +1,29 @@
 import glob, os, re
 
-base_env = Environment(ENV = os.environ)
+HEADER_PATHS = [
+    'glew/include/GL/glew.h',
+    '/usr/include/GL/glew.h' ]    
+
+class CantFindGLEWHeader:
+    
+    def __str__(self):
+        raise 'Unable to find GLEW header - please pass GLEW_HEADER_PATH to SCons'
+
+def glew_header():
+    for path in HEADER_PATHS:
+        try:
+            os.stat(path)
+            return path
+        except:
+            pass
+    return CantFindGLEWHeader()
+
+opts = Options()
+opts.Add('FAT_ARCHS', 'Mac OS X universal binary architectures', 'ppc,i386')
+opts.Add('GLEW_HEADER_PATH', 'Path to the GLEW header', glew_header())
+
+base_env = Environment(ENV = os.environ, options=opts)
+base_env['GLEW_HEADER'] = base_env.File(base_env['GLEW_HEADER_PATH'])
 
 def union(a, b):
     x = a.copy()
@@ -11,8 +34,8 @@ class GCC:
     def environment(self, base_env):
         return base_env.Copy(
             CCFLAGS = [ '-Wall', '-W', '-Wno-unused-parameter', '-Werror', '-g', '-O2' ],
-            CPPPATH = [ 'glew/include', 'Source' ],
-            LIBPATH = [ 'glew/lib' ],
+            CPPPATH = [ '${GLEW_HEADER.dir.dir}', 'Source' ],
+            LIBPATH = [ '${GLEW_HEADER.dir.dir.dir}/lib' ],
             CPPDEFINES = { 'GLEW_STATIC': 1 })
 
 class ThirdParty(GCC):
@@ -123,22 +146,11 @@ GENERATED_SOURCE = [
     generated('glewby-constants.c'),
     generated('glewby-functions.c')
 ]
-
-HEADER_PATHS = [ 'glew/include/GL/glew.h', '/usr/include/GL/glew.h' ]    
-
-def glew_header():
-    for path in HEADER_PATHS:
-        try:
-            os.stat(path)
-            return path
-        except:
-            pass
-    raise "Can't find GLEW header"
     
 base_env.Command(
     target = GENERATED_SOURCE,
     source = ['glewby.rb'] + glob.glob('Templates/Ruby/*.rc'),
-    action = 'ruby glewby.rb --glew-header=' + glew_header() + ' --output-directory=Build/Generated --template-dir=Templates/Ruby')
+    action = 'ruby glewby.rb --glew-header=$GLEW_HEADER --output-directory=Build/Generated --template-dir=Templates/Ruby')
 
 if os.name == 'nt':
     build_glewby(GLEWbyWin32())
@@ -153,11 +165,11 @@ elif os.name == 'posix':
             target = 'glewby.so',
             source = glewby)
     elif kernel_name == "Darwin\n":
-        glewby_ppc = build_glewby(GLEWbyMacOSX('ppc'))
-        glewby_i386 = build_glewby(GLEWbyMacOSX('i386'))
+        fat_archs = base_env['FAT_ARCHS'].split(',')
+        glewbys = map(lambda a: build_glewby(GLEWbyMacOSX(a)), fat_archs)
         base_env.Command(
             target = 'glewby.bundle',
-            source = [ glewby_ppc, glewby_i386 ],
+            source = glewbys,
             action = 'lipo $SOURCES -create -output $TARGET')
 else:
     raise 'Unknown OS'
