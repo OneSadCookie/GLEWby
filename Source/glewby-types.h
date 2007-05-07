@@ -29,12 +29,17 @@ typedef GLubyte *         GLubyteStar;
 
 R2C_VIA(GLboolean, RTEST)
 
-#if defined(GL_EXT_timer_query) /* && GL_EXT_timer_query ? */ \
- && defined(NUM2ULL)
+#if defined(GL_EXT_timer_query) /* && GL_EXT_timer_query ? */
 /* long long is 64-bit everywhere I know of... */
 /* Mac OS X's default ruby doesn't define NUM2ULL */
+#if defined(NUM2ULL)
 R2C_VIA(GLuint64EXT, NUM2ULL)
 R2C_VIA(GLint64EXT, NUM2LL)
+#else
+/* This is broken! Fix, warn, what? */
+R2C_VIA(GLuint64EXT, NUM2ULONG)
+R2C_VIA(GLint64EXT, NUM2LONG)
+#endif
 #endif
 
 #define R2C_VIA_ULONG(type) R2C_VIA(type, NUM2ULONG)

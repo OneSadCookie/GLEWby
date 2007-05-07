@@ -22,6 +22,7 @@ SIMPLE_TYPE(GLsizeiptr)
 SIMPLE_TYPE(GLsizeiptrARB)
 
 #if defined(GL_EXT_timer_query) /* && GL_EXT_timer_query ? */
+/* see glewby-types.h for explanation */
 SIMPLE_TYPE(GLint64EXT)
 SIMPLE_TYPE(GLuint64EXT)
 #endif
