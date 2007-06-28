@@ -7,7 +7,7 @@ HEADER_PATHS = [
 class CantFindGLEWHeader:
     
     def __str__(self):
-        raise 'Unable to find GLEW header - please pass GLEW_HEADER_PATH to SCons'
+        raise IOError('Unable to find GLEW header - please pass GLEW_HEADER_PATH to SCons')
 
 def glew_header():
     for path in HEADER_PATHS:
@@ -157,7 +157,7 @@ if os.name == 'nt':
     base_env.Install(
         dir = '.',
         source = 'Build/glewby.dll')
-elif os.name == 'posix':
+elif os.name == 'sposix':
     kernel_name = os.popen('uname -s').read()
     if kernel_name == "Linux\n": # is that enough?
         glewby = build_glewby(GLEWbyLinux('i386'))
@@ -172,4 +172,4 @@ elif os.name == 'posix':
             source = glewbys,
             action = 'lipo $SOURCES -create -output $TARGET')
 else:
-    raise 'Unknown OS'
+    raise EnvironmentError('Unknown OS')
