@@ -157,7 +157,7 @@ if os.name == 'nt':
     base_env.Install(
         dir = '.',
         source = 'Build/glewby.dll')
-elif os.name == 'sposix':
+elif os.name == 'posix':
     kernel_name = os.popen('uname -s').read()
     if kernel_name == "Linux\n": # is that enough?
         glewby = build_glewby(GLEWbyLinux('i386'))
